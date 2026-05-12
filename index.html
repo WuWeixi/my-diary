@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>拾光笔记｜Notes & Diary</title>
+  <style>
+    :root {
+      --bg: #f6f2ea;
+      --card: rgba(255, 255, 255, 0.78);
+      --card-solid: #fffaf1;
+      --text: #2f2a24;
+      --sub: #8a7d6d;
+      --line: rgba(80, 63, 44, 0.12);
+      --primary: #8b6f47;
+      --primary-dark: #6e5637;
+      --primary-light: #efe4d2;
+      --danger: #b55446;
+      --shadow: 0 20px 60px rgba(88, 68, 43, 0.12);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 30%),
+        linear-gradient(135deg, #f7f1e8 0%, #f2eadf 45%, #efe6d8 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 22px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .sidebar,
+    .editor {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .brand {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--sub);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #e7d8c0;
+    }
+
+    button.primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    button.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    button.danger {
+      background: rgba(181, 84, 70, 0.12);
+      color: var(--danger);
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--sub);
+    }
+
+    .search-wrap {
+      padding: 0 20px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.7);
+      outline: none;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 16px 20px 0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--sub);
+      background: rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+    }
+
+    .list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 20px;
+    }
+
+    .item {
+      padding: 15px 16px;
+      border-radius: 16px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.45);
+      transition: 0.2s ease;
+    }
+
+    .item:hover {
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .item.active {
+      border-color: rgba(139, 111, 71, 0.35);
+      background: var(--card-solid);
+      box-shadow: 0 8px 24px rgba(88, 68, 43, 0.08);
+    }
+
+    .item-title {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .item-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--sub);
+      font-size: 12px;
+    }
+
+    .item-preview {
+      margin-top: 8px;
+      color: #6f6255;
+      font-size: 13px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--sub);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .editor {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-top {
+      padding: 22px 26px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .editor-top-left {
+      min-width: 0;
+    }
+
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .save-state {
+      color: var(--sub);
+      font-size: 13px;
+    }
+
+    .editor-tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .editor-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 26px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--sub);
+      font-weight: 600;
+    }
+
+    .title-input {
+      width: 100%;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: var(--text);
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 4px 0;
+    }
+
+    .title-input::placeholder {
+      color: rgba(47, 42, 36, 0.28);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+      font-family: inherit;
+    }
+
+    .meta-grid input,
+    .meta-grid select,
+    .tag-input {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.65);
+      outline: none;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 460px;
+      resize: vertical;
+      border: none;
+      outline: none;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 22px;
+      color: var(--text);
+      line-height: 1.9;
+      font-size: 16px;
+    }
+
+    textarea::placeholder {
+      color: rgba(47, 42, 36, 0.35);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      color: var(--sub);
+      font-size: 13px;
+    }
+
+    .chip {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--line);
+    }
+
+    .footer-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 16px 20px 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .sidebar {
+        max-height: 48vh;
+      }
+
+      .editor-top {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .editor-tools {
+        justify-content: flex-start;
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .title-input {
+        font-size: 28px;
+      }
+
+      textarea {
+        min-height: 360px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>拾光笔记</h1>
+        <p>记录灵感、日常、情绪与片刻想法。所有内容保存在当前浏览器本地。</p>
+      </div>
+
+      <div class="actions">
+        <button class="primary" onclick="createEntry('note')">新建笔记</button>
+        <button onclick="createEntry('diary')">写日记</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-filter="all" onclick="setFilter('all')">全部</div>
+        <div class="tab" data-filter="note" onclick="setFilter('note')">笔记</div>
+        <div class="tab" data-filter="diary" onclick="setFilter('diary')">日记</div>
+      </div>
+
+      <div class="search-wrap">
+        <input id="searchInput" type="text" placeholder="搜索标题、内容或标签..." oninput="renderList()" />
+      </div>
+
+      <div id="list" class="list"></div>
+
+      <div class="footer-actions">
+        <button class="ghost" onclick="exportData()">导出备份</button>
+        <button class="ghost" onclick="document.getElementById('importFile').click()">导入备份</button>
+        <input id="importFile" type="file" accept=".json" onchange="importData(event)" />
+      </div>
+    </aside>
+
+    <main class="editor">
+      <div class="editor-top">
+        <div class="editor-top-left">
+          <div id="modeBadge" class="mode-badge">笔记</div>
+          <div id="saveState" class="save-state">已准备就绪</div>
+        </div>
+
+        <div class="editor-tools">
+          <button onclick="manualSave()">保存</button>
+          <button class="danger" onclick="deleteCurrent()">删除</button>
+        </div>
+      </div>
+
+      <div class="editor-body">
+        <div class="field">
+          <input
+            id="titleInput"
+            class="title-input"
+            type="text"
+            placeholder="给这条记录起个标题"
+            oninput="autoSave()"
+          />
+        </div>
+
+        <div class="meta-grid">
+          <div class="field">
+            <label>日期</label>
+            <input id="dateInput" type="date" oninput="autoSave()" />
+          </div>
+
+          <div class="field">
+            <label>心情</label>
+            <select id="moodInput" onchange="autoSave()">
+              <option value="">不记录</option>
+              <option value="平静">平静</option>
+              <option value="开心">开心</option>
+              <option value="疲惫">疲惫</option>
+              <option value="焦虑">焦虑</option>
+              <option value="松弛">松弛</option>
+              <option value="低落">低落</option>
+              <option value="充实">充实</option>
+              <option value="灵感涌现">灵感涌现</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>标签</label>
+            <input
+              id="tagInput"
+              class="tag-input"
+              type="text"
+              placeholder="例如：工作, 灵感, 生活"
+              oninput="autoSave()"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>正文</label>
+          <textarea
+            id="contentInput"
+            placeholder="从这里开始记录吧。
+
+可以写：
+- 今天发生了什么
+- 一个突然冒出的想法
+- 一段项目思考
+- 一次情绪整理
+- 一份明天的计划"
+            oninput="autoSave()"
+          ></textarea>
+
+          <div class="stats">
+            <span id="wordCount" class="chip">0 字</span>
+            <span id="createdAt" class="chip">创建时间：-</span>
+            <span id="updatedAt" class="chip">更新时间：-</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "shiguang_notes_diary_v1";
+
+    let entries = [];
+    let currentId = null;
+    let currentFilter = "all";
+    let saveTimer = null;
+
+    const listEl = document.getElementById("list");
+    const titleInput = document.getElementById("titleInput");
+    const dateInput = document.getElementById("dateInput");
+    const moodInput = document.getElementById("moodInput");
+    const tagInput = document.getElementById("tagInput");
+    const contentInput = document.getElementById("contentInput");
+    const searchInput = document.getElementById("searchInput");
+    const modeBadge = document.getElementById("modeBadge");
+    const saveState = document.getElementById("saveState");
+    const wordCount = document.getElementById("wordCount");
+    const createdAt = document.getElementById("createdAt");
+    const updatedAt = document.getElementById("updatedAt");
+
+    init();
+
+    function init() {
+      loadData();
+
+      if (entries.length === 0) {
+        createEntry("diary", false);
+      } else {
+        currentId = entries[0].id;
+        loadEntry(currentId);
+      }
+
+      renderList();
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      entries = raw ? JSON.parse(raw) : [];
+
+      entries.sort((a, b) => {
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function createEntry(type = "note", shouldRender = true) {
+      const now = new Date();
+      const today = formatDateForInput(now);
+
+      const entry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        type,
+        title: type === "diary" ? `${today} 的日记` : "未命名笔记",
+        date: today,
+        mood: type === "diary" ? "平静" : "",
+        tags: "",
+        content: "",
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString()
+      };
+
+      entries.unshift(entry);
+      currentId = entry.id;
+      saveData();
+
+      if (shouldRender) {
+        loadEntry(currentId);
+        renderList();
+        setSaveState("已新建");
+      }
+    }
+
+    function loadEntry(id) {
+      const entry = entries.find(item => item.id === id);
+      if (!entry) return;
+
+      currentId = id;
+
+      titleInput.value = entry.title || "";
+      dateInput.value = entry.date || "";
+      moodInput.value = entry.mood || "";
+      tagInput.value = entry.tags || "";
+      contentInput.value = entry.content || "";
+
+      modeBadge.textContent = entry.type === "diary" ? "日记" : "笔记";
+      modeBadge.innerHTML = entry.type === "diary" ? "🌙 日记" : "✦ 笔记";
+
+      createdAt.textContent = "创建时间：" + formatDateTime(entry.createdAt);
+      updatedAt.textContent = "更新时间：" + formatDateTime(entry.updatedAt);
+
+      updateWordCount();
+      renderList();
+    }
+
+    function collectCurrentForm() {
+      return {
+        title: titleInput.value.trim(),
+        date: dateInput.value,
+        mood: moodInput.value,
+        tags: tagInput.value.trim(),
+        content: contentInput.value
+      };
+    }
+
+    function saveCurrent() {
+      const entry = entries.find(item => item.id === currentId);
+      if (!entry) return;
+
+      const form = collectCurrentForm();
+
+      entry.title = form.title || "未命名记录";
+      entry.date = form.date;
+      entry.mood = form.mood;
+      entry.tags = form.tags;
+      entry.content = form.content;
+      entry.updatedAt = new Date().toISOString();
+
+      entries.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+      saveData();
+      renderList();
+      updateWordCount();
+
+      updatedAt.textContent = "更新时间：" + formatDateTime(entry.updatedAt);
+    }
+
+    function autoSave() {
+      setSaveState("正在输入...");
+      updateWordCount();
+
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        saveCurrent();
+        setSaveState("已自动保存");
+      }, 500);
+    }
+
+    function manualSave() {
+      saveCurrent();
+      setSaveState("已手动保存");
+    }
+
+    function deleteCurrent() {
+      if (!currentId) return;
+
+      const ok = confirm("确定要删除这条记录吗？删除后无法恢复。");
+      if (!ok) return;
+
+      entries = entries.filter(item => item.id !== currentId);
+      saveData();
+
+      if (entries.length > 0) {
+        currentId = entries[0].id;
+        loadEntry(currentId);
+      } else {
+        createEntry("diary");
+      }
+
+      renderList();
+      setSaveState("已删除");
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.filter === filter);
+      });
+
+      renderList();
+    }
+
+    function renderList() {
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      let filtered = entries.filter(entry => {
+        const matchType = currentFilter === "all" || entry.type === currentFilter;
+
+        const text = [
+          entry.title,
+          entry.content,
+          entry.tags,
+          entry.mood,
+          entry.date
+        ].join(" ").toLowerCase();
+
+        const matchSearch = !keyword || text.includes(keyword);
+
+        return matchType && matchSearch;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty">
+            没有找到记录。<br/>
+            试试新建一条笔记，或者换个关键词搜索。
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(entry => {
+        const typeLabel = entry.type === "diary" ? "日记" : "笔记";
+        const mood = entry.mood ? ` · ${entry.mood}` : "";
+        const preview = entry.content
+          ? escapeHtml(entry.content.slice(0, 90))
+          : "还没有正文内容";
+
+        return `
+          <div class="item ${entry.id === currentId ? "active" : ""}" onclick="loadEntry('${entry.id}')">
+            <div class="item-title">${escapeHtml(entry.title || "未命名记录")}</div>
+            <div class="item-meta">
+              <span>${typeLabel}${mood}</span>
+              <span>${entry.date || ""}</span>
+            </div>
+            <div class="item-preview">${preview}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateWordCount() {
+      const text = contentInput.value || "";
+      const chineseChars = text.match(/[\u4e00-\u9fa5]/g) || [];
+      const englishWords = text
+        .replace(/[\u4e00-\u9fa5]/g, " ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      const count = chineseChars.length + englishWords.length;
+      wordCount.textContent = `${count} 字`;
+    }
+
+    function exportData() {
+      const data = {
+        app: "拾光笔记",
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        entries
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `拾光笔记备份_${formatDateForInput(new Date())}.json`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+      setSaveState("已导出备份");
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        try {
+          const json = JSON.parse(e.target.result);
+          const importedEntries = Array.isArray(json) ? json : json.entries;
+
+          if (!Array.isArray(importedEntries)) {
+            alert("导入失败：文件格式不正确。");
+            return;
+          }
+
+          const ok = confirm("导入后会合并到当前记录中，是否继续？");
+          if (!ok) return;
+
+          const existingIds = new Set(entries.map(item => item.id));
+          const normalized = importedEntries.map(item => ({
+            id: item.id && !existingIds.has(item.id)
+              ? item.id
+              : (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
+            type: item.type === "diary" ? "diary" : "note",
+            title: item.title || "未命名记录",
+            date: item.date || formatDateForInput(new Date()),
+            mood: item.mood || "",
+            tags: item.tags || "",
+            content: item.content || "",
+            createdAt: item.createdAt || new Date().toISOString(),
+            updatedAt: item.updatedAt || new Date().toISOString()
+          }));
+
+          entries = [...normalized, ...entries];
+          entries.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+          saveData();
+
+          currentId = entries[0]?.id || null;
+          if (currentId) loadEntry(currentId);
+
+          renderList();
+          setSaveState("导入成功");
+        } catch (err) {
+          alert("导入失败：无法解析 JSON 文件。");
+        }
+      };
+
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function setSaveState(text) {
+      saveState.textContent = text;
+
+      setTimeout(() => {
+        const entry = entries.find(item => item.id === currentId);
+        if (entry) {
+          saveState.textContent = "上次保存：" + formatDateTime(entry.updatedAt);
+        }
+      }, 1400);
+    }
+
+    function formatDateForInput(date) {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDateTime(dateString) {
+      if (!dateString) return "-";
+
+      const d = new Date(dateString);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const hour = String(d.getHours()).padStart(2, "0");
+      const minute = String(d.getMinutes()).padStart(2, "0");
+
+      return `${year}-${month}-${day} ${hour}:${minute}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
