@@ -410,6 +410,14 @@
 </head>
 
 <body>
+  <div class="auth-box">
+  <input id="emailInput" type="email" placeholder="邮箱" />
+  <input id="passwordInput" type="password" placeholder="密码" />
+  <button onclick="signUp()">注册</button>
+  <button onclick="signIn()">登录</button>
+  <button onclick="signOut()">退出</button>
+  <button onclick="createTestEntry()">新建测试日记</button>
+</div>
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -523,7 +531,108 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SUPABASE_URL = "https://jxgsahdubugxfixdgyza.supabase.co/rest/v1/";
+    const SUPABASE_ANON_KEY = "sb_publishable_5iKOgkJZ3MpRUwXYuBTDRg_7EEaTgwV";
+
+    const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+    async function signUp() {
+  const email = document.getElementById("emailInput").value.trim();
+  const password = document.getElementById("passwordInput").value.trim();
+
+  if (!email || !password) {
+    alert("请输入邮箱和密码");
+    return;
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    alert("注册失败：" + error.message);
+    return;
+  }
+
+  alert("注册成功，请登录");
+}
+    async function signIn() {
+  const email = document.getElementById("emailInput").value.trim();
+  const password = document.getElementById("passwordInput").value.trim();
+
+  if (!email || !password) {
+    alert("请输入邮箱和密码");
+    return;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    alert("登录失败：" + error.message);
+    return;
+  }
+
+  alert("登录成功");
+  await loadEntriesFromCloud();
+}
+    async function signOut() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert("退出失败：" + error.message);
+    return;
+  }
+
+  alert("已退出登录");
+}
+    async function createTestEntry() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("entries")
+    .insert({
+      type: "diary",
+      title: `${today} 的日记`,
+      content: "这是我的第一篇云端测试日记。",
+      date: today,
+      mood: "平静",
+      tags: "测试"
+    })
+    .select()
+    .single();
+
+  if (error) {
+    alert("新建失败：" + error.message);
+    console.error(error);
+    return;
+  }
+
+  alert("新建成功");
+  console.log("新建日记：", data);
+}
+    async function loadEntriesFromCloud() {
+  const { data, error } = await supabase
+    .from("entries")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    alert("读取失败：" + error.message);
+    console.error(error);
+    return;
+  }
+
+  console.log("云端日记：", data);
+}
+    
     const STORAGE_KEY = "shiguang_notes_diary_v1";
 
     let entries = [];
